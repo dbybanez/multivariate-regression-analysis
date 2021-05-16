@@ -13,6 +13,8 @@ head(data) # preview the data
 library(gridExtra) # display plots in grid format
 library(dplyr) # data manipulation (group_by)
 library(ggplot2)
+library(cowplot) # for plot_grid
+library(stringr) # for str_replace
 
 # 0. Data Cleaning
 
@@ -104,3 +106,51 @@ plot_item_fat_content <- ggplot(bm_data %>% group_by(Item_Fat_Content) %>% summa
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 grid.arrange(plot_outlet_size, plot_item_fat_content, ncol = 2)
+
+# 1.2. Multivariate Analysis
+# Check for relationships
+
+# Item_Weight and Item_Outlet_Sales
+plot_weight_sales <- ggplot(bm_data) +
+  geom_point(
+    aes(Item_Weight, Item_Outlet_Sales),
+    colour = "#FB5555",
+    alpha = 0.3) +
+  theme(axis.title = element_text(size = 8.5))
+
+# Item_Visibility and Item_Outlet_Sales
+plot_visibility_sales <- ggplot(bm_data) +
+  geom_point(
+    aes(Item_Visibility, Item_Outlet_Sales),
+    colour = "#55A3FB",
+    alpha = 0.3) +
+  theme(axis.title = element_text(size = 8.5))
+
+# Item_MRP and Item_Outlet_Sales
+plot_mrp_sales <- ggplot(bm_data) +
+  geom_point(
+    aes(Item_MRP, Item_Outlet_Sales),
+    colour = "#45B74C", alpha = 0.3) +
+  theme(axis.title = element_text(size = 8.5))
+
+sec_row = plot_grid(plot_visibility_sales, plot_mrp_sales, ncol = 2)
+plot_grid(sec_row, plot_weight_sales, nrow = 2)
+
+# Outlet_Identifier, Outlet_Type, and Item_Outlet_Sales
+plot_identifier_type_sales <- ggplot(bm_data) +
+  geom_boxplot(
+    aes(Outlet_Identifier, sqrt(Item_Outlet_Sales), fill = Outlet_Type)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
+plot_identifier_type_sales
+
+
+# 2. Data Pre-processing
+
+# 2.1. Combine Item_Fat_Content categories
+bm_data$Item_Fat_Content <-str_replace(
+  str_replace(str_replace(bm_data$Item_Fat_Content,"LF","Low Fat"),"reg","Regular"),"low fat","Low Fat")
+table(bm_data$Item_Fat_Content)
+
+
+
