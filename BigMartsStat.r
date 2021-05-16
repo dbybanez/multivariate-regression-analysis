@@ -3,7 +3,7 @@
 # Christen Cacanog, Elmo Ranolo, David Ybanez
 
 # import data and omit
-setwd("C:/Users/lenovo/Documents/Masteral/MSIT 1- 2/MIT 61301/File")
+setwd("C:/devtools/data/")
 data <- read.csv("bigmartsalestrainset.csv")
 bm_data <- na.omit(data[-1]) # remove rows with blank cells
 head(bm_data)

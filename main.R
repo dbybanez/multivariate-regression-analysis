@@ -5,8 +5,10 @@
 # import data and omit
 setwd("C:/devtools/data/")
 data <- read.csv("bigmartsalestrainset.csv")
+summary(data)
 bm_data <- na.omit(data[-1]) # remove rows with blank cells
 head(bm_data)
+summary(bm_data)
 
 # load libraries
 # Before loading the libraries, make sure to install them
