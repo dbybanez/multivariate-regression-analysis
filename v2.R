@@ -15,6 +15,8 @@ library(dplyr) # data manipulation (group_by)
 library(ggplot2)
 library(cowplot) # for plot_grid
 library(stringr) # for str_replace
+library(caret) # parameter tuning. for dummyVars
+library(dummies) # for dummies
 
 # 0. Data Cleaning
 
@@ -152,5 +154,35 @@ bm_data$Item_Fat_Content <-str_replace(
   str_replace(str_replace(bm_data$Item_Fat_Content,"LF","Low Fat"),"reg","Regular"),"low fat","Low Fat")
 table(bm_data$Item_Fat_Content)
 
+# 2.2. Create Outlet_Age and Item_Category columns
+bm_data <- bm_data %>% 
+  mutate(Item_Category = substr(Item_Identifier, 1, 2),
+         Outlet_Age = 2013 - Outlet_Establishment_Year)
+table(bm_data$Item_Category)
 
+# 2.3. Convert non-food items to Non-Edible category in Item_Category
+bm_data$Item_Fat_Content[bm_data$Item_Category == "NC"] = "Non-Edible" 
+table(bm_data$Item_Fat_Content)
+
+# 2.4. Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
+# dummies = dummyVars(~.,data=bm_data,fullRank=TRUE)
+# dummies
+bm_data <- dummy.data.frame(
+  bm_data,
+  names = c(
+    'Item_Fat_Content',
+    'Outlet_Size',
+    'Outlet_Location_Type',
+    'Outlet_Type',
+    'Item_Category',
+    'Outlet_Identifier'),
+  sep ='_')
+
+
+# 2.5. Create data frame from dummies
+# bm_df = as.data.frame(predict(dummies,newdata=bm_data))
+bm_df <- subset(
+  bm_data,
+  select = -c(Item_Identifier, Item_Type, Outlet_Establishment_Year))
+str(bm_df)
 
