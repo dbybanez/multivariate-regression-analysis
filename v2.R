@@ -17,6 +17,7 @@ library(cowplot) # for plot_grid
 library(stringr) # for str_replace
 library(caret) # parameter tuning. for dummyVars
 library(dummies) # for dummies
+library(olsrr) # for OLS regression models, for ols_* functions
 
 # 0. Data Cleaning
 
@@ -178,11 +179,50 @@ bm_data <- dummy.data.frame(
     'Outlet_Identifier'),
   sep ='_')
 
-
 # 2.5. Create data frame from dummies
 # bm_df = as.data.frame(predict(dummies,newdata=bm_data))
+
 bm_df <- subset(
   bm_data,
   select = -c(Item_Identifier, Item_Type, Outlet_Establishment_Year))
 str(bm_df)
+
+# 3. Exploratory data analysis
+View(bm_df)
+plot(bm_df[1:11]) # 29 is too many. need to wait a couple minutes to finish the plot
+
+bm_lm = lm(bm_df$Item_Outlet_Sales~., data = bm_df)
+anova(bm_lm)
+summary(bm_lm)
+coefficients(bm_lm)
+
+# Variable selection
+# Automatic Procedures
+
+# Forward
+olssforwardp_bm_lm <- ols_step_forward_p(bm_lm, data = bm_df, details = TRUE)
+plot(olssforwardp_bm_lm)
+
+# Backward
+olssbackp_bm_lm <- ols_step_backward_p(bm_lm,details=TRUE)
+plot(olssbackp_bm_lm)
+
+# Stepwise
+olssbothp_bm_lm <- ols_step_both_p(bm_lm, details=TRUE, pent=0.05, prem=0.05) # error
+plot(olssbothp_bm_lm)
+
+# All possible
+olssap_bm_lm <- ols_step_all_possible(bm_lm)
+
+
+
+
+
+
+
+
+
+
+
+
 
