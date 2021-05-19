@@ -179,6 +179,7 @@ bm_data <- dummy.data.frame(
     'Outlet_Identifier'),
   sep ='_')
 
+summary(bm_data)
 # 2.5. Create data frame from dummies
 # bm_df = as.data.frame(predict(dummies,newdata=bm_data))
 
@@ -186,6 +187,7 @@ bm_df <- subset(
   bm_data,
   select = -c(Item_Identifier, Item_Type, Outlet_Establishment_Year))
 str(bm_df)
+summary(bm_df)
 
 # 3. Exploratory data analysis
 View(bm_df)
@@ -212,6 +214,12 @@ olssbothp_bm_lm <- ols_step_both_p(bm_lm, details=TRUE, pent=0.05, prem=0.05) # 
 plot(olssbothp_bm_lm)
 
 # All possible
+if(.Platform$OS.type == "windows") withAutoprint({
+  memory.size()
+  memory.size(TRUE)
+  memory.limit()
+})
+memory.limit(size=56000)
 olssap_bm_lm <- ols_step_all_possible(bm_lm)
 
 
