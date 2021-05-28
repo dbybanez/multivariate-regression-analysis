@@ -210,17 +210,24 @@ olssbackp_bm_lm <- ols_step_backward_p(bm_lm,details=TRUE)
 plot(olssbackp_bm_lm)
 
 # Stepwise
-olssbothp_bm_lm <- ols_step_both_p(bm_lm, details=TRUE, pent=0.05, prem=0.05) # error
-plot(olssbothp_bm_lm)
+#olssbothp_bm_lm <- ols_step_both_p(bm_lm, details=TRUE, pent=0.05, prem=0.05) # error
+#plot(olssbothp_bm_lm)
 
 # All possible
-if(.Platform$OS.type == "windows") withAutoprint({
-  memory.size()
-  memory.size(TRUE)
-  memory.limit()
-})
-memory.limit(size=56000)
-olssap_bm_lm <- ols_step_all_possible(bm_lm)
+#if(.Platform$OS.type == "windows") withAutoprint({
+#  memory.size()
+#  memory.size(TRUE)
+#  memory.limit()
+#})
+#memory.limit(size=56000)
+#olssap_bm_lm <- ols_step_all_possible(bm_lm)
+
+#Best Subset (variables)
+olssbs_bm_lm <- ols_step_best_subset(bm_lm)
+View(olssbs_bm_lm)
+plot(olssbs_bm_lm)
+
+# 4. Test the new model
 
 
 
