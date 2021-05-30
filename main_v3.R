@@ -98,7 +98,7 @@ plot_visibility <- ggplot(data) +
     color = 'black',
     fill = '#5FE45B')
 
-# Plot for Item_MRP]
+# Plot for Item_MRP
 plot_mrp <- ggplot(data) +
   geom_histogram(
     aes(Item_MRP),
@@ -115,7 +115,7 @@ grid.arrange(plot_weight, plot_visibility, plot_mrp, ncol = 3, nrow = 1)
 # R reference: https://stackoverflow.com/questions/27125672/what-does-function-mean-in-r
 
 # Outlet_Size
-plot_outlet_size <- ggplot(bm_data %>% group_by(Outlet_Size) %>% summarise(Count = n())) +
+plot_outlet_size <- ggplot(data %>% group_by(Outlet_Size) %>% summarise(Count = n())) +
   geom_bar(
     aes(Outlet_Size, Count),
     stat = "identity",
@@ -126,7 +126,7 @@ plot_outlet_size <- ggplot(bm_data %>% group_by(Outlet_Size) %>% summarise(Count
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Item_Fat_Content
-plot_item_fat_content <- ggplot(bm_data %>% group_by(Item_Fat_Content) %>% summarise(Count = n())) +
+plot_item_fat_content <- ggplot(data %>% group_by(Item_Fat_Content) %>% summarise(Count = n())) +
   geom_bar(
     aes(Item_Fat_Content, Count),
     stat = "identity",
@@ -139,7 +139,7 @@ plot_item_fat_content <- ggplot(bm_data %>% group_by(Item_Fat_Content) %>% summa
 grid.arrange(plot_item_fat_content, plot_outlet_size, ncol = 2)
 
 # Item_Type
-ggplot(bm_data %>% group_by(Item_Type) %>% summarise(Count = n())) + # %>% is a pipe function
+ggplot(data %>% group_by(Item_Type) %>% summarise(Count = n())) + # %>% is a pipe function
   geom_bar(
     aes(
       Item_Type, 
@@ -154,13 +154,57 @@ ggplot(bm_data %>% group_by(Item_Type) %>% summarise(Count = n())) + # %>% is a 
       size = 8)) +
   ggtitle("Item_Type")
 
+# Outlet_Identifier
+plot_outlet_identifier <- ggplot(data %>% group_by(Outlet_Identifier) %>% summarise(Count = n())) +
+  geom_bar(
+    aes(Outlet_Identifier, Count),
+    stat = "identity",
+    fill = "#FFB300") +
+  geom_label(
+    aes(Outlet_Identifier, Count, label = Count),
+    vjust = 0.5, size =2.5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+# Outlet_Establishment_Year
+plot_outlet_establishment_year <- ggplot(data %>% group_by(Outlet_Establishment_Year) %>% summarise(Count = n())) +
+  geom_bar(
+    aes(Outlet_Establishment_Year, Count),
+    stat = "identity",
+    fill = "#FF5700") +
+  geom_label(
+    aes(Outlet_Establishment_Year, Count, label = Count),
+    vjust = 0.5, size = 2.5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-# 1.2. Multivariate Analysis
-# Check for relationships
+# Outlet_Location_Type
+plot_outlet_location_type <- ggplot(data %>% group_by(Outlet_Location_Type) %>% summarise(Count = n())) +
+  geom_bar(
+    aes(Outlet_Location_Type, Count),
+    stat = "identity",
+    fill = "#0088FF") +
+  geom_label(
+    aes(Outlet_Location_Type, Count, label = Count),
+    vjust = 0.5, size = 2.5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Outlet_Type
+plot_outlet_type <- ggplot(data %>% group_by(Outlet_Type) %>% summarise(Count = n())) +
+  geom_bar(
+    aes(Outlet_Type, Count),
+    stat = "identity",
+    fill = "#00FFBA") +
+  geom_label(
+    aes(Outlet_Type, Count, label = Count),
+    vjust = 0.5, size = 2.5) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+grid.arrange(plot_outlet_identifier, plot_outlet_establishment_year, plot_outlet_location_type, plot_outlet_type, ncol = 4)
+
+# 2.1 Bivariate Analysis 
+# Bivariate analysis for numerical variables with respect to the dependent/target variable Item_Outlet_Sales.
 
 # Item_Weight and Item_Outlet_Sales
-plot_weight_sales <- ggplot(bm_data) +
+plot_weight_sales <- ggplot(data) +
   geom_point(
     aes(Item_Weight, Item_Outlet_Sales),
     colour = "#FB5555",
@@ -168,7 +212,7 @@ plot_weight_sales <- ggplot(bm_data) +
   theme(axis.title = element_text(size = 8.5))
 
 # Item_Visibility and Item_Outlet_Sales
-plot_visibility_sales <- ggplot(bm_data) +
+plot_visibility_sales <- ggplot(data) +
   geom_point(
     aes(Item_Visibility, Item_Outlet_Sales),
     colour = "#55A3FB",
@@ -176,7 +220,7 @@ plot_visibility_sales <- ggplot(bm_data) +
   theme(axis.title = element_text(size = 8.5))
 
 # Item_MRP and Item_Outlet_Sales
-plot_mrp_sales <- ggplot(bm_data) +
+plot_mrp_sales <- ggplot(data) +
   geom_point(
     aes(Item_MRP, Item_Outlet_Sales),
     colour = "#45B74C", alpha = 0.3) +
@@ -186,7 +230,7 @@ sec_row = plot_grid(plot_visibility_sales, plot_mrp_sales, ncol = 2)
 plot_grid(sec_row, plot_weight_sales, nrow = 2)
 
 # Outlet_Identifier, Outlet_Type, and Item_Outlet_Sales
-plot_identifier_type_sales <- ggplot(bm_data) +
+plot_identifier_type_sales <- ggplot(data) +
   geom_boxplot(
     aes(Outlet_Identifier, sqrt(Item_Outlet_Sales), fill = Outlet_Type)) +
   theme_minimal() +
