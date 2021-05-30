@@ -20,21 +20,21 @@ library(dummies) # for dummies
 library(olsrr) # for OLS regression models, for ols_* functions
 library(sqldf) # SQL queries
 
-# Data Inspection
+# 1. Data Inspection
 
-# Check numeric columns for blanks in the dataset
-summary(data) # Item_Weight has 1463 NA's and should be removed
+# Check the summary of data
+summary(data)
 
 # Check which columns are categorical and numerical
-data_numeric = dplyr::select_if(data, is.numeric) 
-names(data_numeric) # numerical
+data_numeric = dplyr::select_if(data, is.numeric) # numerical
+names(data_numeric) 
 
-data_categorical = dplyr::select_if(data, is.character)
-names(data_categorical) # categorical
+data_categorical = dplyr::select_if(data, is.character) # categorical
+names(data_categorical) 
 
-# Check numeric columns for blanks
-item_weight_blanks      = sqldf("SELECT COUNT(*) AS Item_Weight_Blanks FROM data WHERE Item_Weight IS NULL OR Item_Weight = ''") 
-item_weight_blanks      # 1463 blanks for Item_Weight
+# Check for blanks: numerical variables
+item_weight_blanks     = sqldf("SELECT COUNT(*) AS Item_Weight_Blanks FROM data WHERE Item_Weight IS NULL OR Item_Weight = ''") 
+item_weight_blanks     # 1463 blanks for Item_Weight
 item_visibility_blanks = sqldf("SELECT COUNT(*) AS Item_Visiblity_Blanks FROM data WHERE Item_Visibility IS NULL OR Item_Visibility = ''") 
 item_visibility_blanks # no blanks for Item_Visibility
 item_MRP_blanks        = sqldf("SELECT COUNT(*) AS Item_MRP FROM data WHERE Item_MRP IS NULL OR Item_MRP = ''") 
@@ -44,7 +44,7 @@ outlet_year_blanks     # no blanks for Outlet_Establishment_Year
 outlet_sales_blanks    = sqldf("SELECT COUNT(*) AS Item_Outlet_Sales_Blanks FROM data WHERE Item_Outlet_Sales IS NULL OR Item_Outlet_Sales = ''")
 outlet_sales_blanks    # no blanks for Item_Outlet_Sales
 
-# Check non-numeric columns for blanks
+# Check for blanks: categorical variables
 item_identifier_blanks   = sqldf("SELECT COUNT(*) AS Item_Identifier_Blanks FROM data WHERE Item_Identifier IS NULL OR Item_Identifier = ''") 
 item_identifier_blanks   # no blanks for Item_Identifier
 item_fat_content_blanks  = sqldf("SELECT COUNT(*) AS Item_Fat_Content_Blanks FROM data WHERE Item_Fat_Content IS NULL OR Item_Fat_Content = ''") 
@@ -60,8 +60,27 @@ outlet_location_blanks   # no blanks for Outlet_Location_Type
 outlet_type              = sqldf("SELECT COUNT(*) AS Outlet_Type_Blanks FROM data WHERE Outlet_Type IS NULL OR Outlet_Type = ''")
 outlet_type              # no blanks for Outlet_Type
 
+# Check for inconsistencies in the data: numerical variables
+head(table(data$Item_Weight))         # Item_Weight
+head(table(data$Item_Visibility))     # Item_Visibility
+head(table(data$Item_MRP))            # Item_MRP
+table(data$Outlet_Establishment_Year) # Outlet_Establishment_Year
+head(table(data$Item_Outlet_Sales))   # Item_Outlet_Sales
 
-# 0.2. Omitting rows with empty cells
+# Check for inconsistencies in the data: categorical variables
+head(table(data$Item_Identifier)) # Item_Identifier
+table(data$Item_Fat_Content)      # Item_Fat_Content
+head(table(data$Item_Type))       # Item_Type
+table(data$Outlet_Identifier)     # Outlet_Identifier
+table(data$Outlet_Size)           # Outlet_Size
+table(data$Outlet_Location_Type)  # Outlet_Location_Type
+table(data$Outlet_Type)           # Outlet_Type
+
+
+# 2. Data Cleaning
+
+# Omitting blanks
+# Although in data science, as much as 
 nrow(data) # total rows before omitting
 bm_data <- na.omit(data) # use bm_data moving forward
 nrow(bm_data) # total rows after omitting
