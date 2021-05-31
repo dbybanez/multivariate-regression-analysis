@@ -297,8 +297,8 @@ omit_outlet_size_blanks       = sqldf("SELECT COUNT(*) AS Outlet_Size_Blanks FRO
 omit_outlet_size_blanks       # 2410 blanks for Outlet_Size
 bm_data = sqldf(c("DELETE FROM bm_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''", "select * FROM main.bm_data"))
 
-# Remove zeroes for Item_Visibility
-omit_item_visibility_blanks = sqldf("SELECT COUNT(*) AS Item_Visiblity_Zeroes FROM bm_data WHERE Item_Visibility = 0") 
+# Remove zeros for Item_Visibility
+omit_item_visibility_blanks = sqldf("SELECT COUNT(*) AS Item_Visiblity_Zeros FROM bm_data WHERE Item_Visibility = 0") 
 omit_item_visibility_blanks # no blanks for Item_Visibility
 bm_data = sqldf(c("DELETE FROM bm_data WHERE Item_Visibility = 0", "select * FROM main.bm_data"))
 
@@ -307,22 +307,43 @@ nrow(bm_data) # total rows after omitting
 
 # 3. Data Pre-processing
 
-# 2.1. Combine Item_Fat_Content categories
+# 3.1 Combine Item_Fat_Content categories
+table(bm_data$Item_Fat_Content) # Before
 bm_data$Item_Fat_Content <-str_replace(
   str_replace(str_replace(bm_data$Item_Fat_Content,"LF","Low Fat"),"reg","Regular"),"low fat","Low Fat")
-table(bm_data$Item_Fat_Content)
+table(bm_data$Item_Fat_Content) # After
 
-# 2.2. Create Outlet_Age and Item_Category columns
+# 3.2 Create Outlet_Age and Item_Category columns
 bm_data <- bm_data %>% 
   mutate(Item_Category = substr(Item_Identifier, 1, 2),
          Outlet_Age = 2013 - Outlet_Establishment_Year)
 table(bm_data$Item_Category)
 
-# 2.3. Convert non-food items to Non-Edible category in Item_Category
+# 3.3 Convert non-food items to Non-Edible category in Item_Category
 bm_data$Item_Fat_Content[bm_data$Item_Category == "NC"] = "Non-Edible" 
 table(bm_data$Item_Fat_Content)
 
-# 2.4. Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
+# 3.4 Select the necessary columns before checking the overall significance
+sel_bm_data_df <- data.frame(
+                bm_data$Item_Category,
+                bm_data$Item_Weight,
+                bm_data$Item_Fat_Content,
+                bm_data$Item_Visibility,
+                bm_data$Item_Type,
+                bm_data$Item_MRP,
+                bm_data$Outlet_Identifier,
+                bm_data$Outlet_Establishment_Year,
+                bm_data$Outlet_Size,
+                bm_data$Outlet_Location_Type,
+                bm_data$Item_Outlet_Sales)
+
+# 3.5 Checking for overall significance before performing dummy
+full_bm_data_df = lm(sel_bm_data_df$bm_data.Item_Outlet_Sales~., data = sel_bm_data_df)
+anova(full_bm_data_df)
+summary(full_bm_data_df)
+coefficients(full_bm_data_df)
+
+# 3.6 Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
 # dummies = dummyVars(~.,data=bm_data,fullRank=TRUE)
 # dummies
 bm_data <- dummy.data.frame(
