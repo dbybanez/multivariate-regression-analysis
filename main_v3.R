@@ -336,6 +336,7 @@ sel_bm_data_df <- data.frame(
                 bm_data$Outlet_Size,
                 bm_data$Outlet_Location_Type,
                 bm_data$Item_Outlet_Sales)
+summary(sel_bm_data_df)
 
 # 3.5 Checking for overall significance before performing dummy
 full_bm_data_df = lm(sel_bm_data_df$bm_data.Item_Outlet_Sales~., data = sel_bm_data_df)
@@ -346,23 +347,23 @@ coefficients(full_bm_data_df)
 # 3.6 Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
 # dummies = dummyVars(~.,data=bm_data,fullRank=TRUE)
 # dummies
-bm_data <- dummy.data.frame(
-  bm_data,
+sel_bm_data_df_dummy <- dummy.data.frame(
+  sel_bm_data_df,
   names = c(
-    'Item_Fat_Content',
-    'Outlet_Size',
-    'Outlet_Location_Type',
-    'Outlet_Type',
-    'Item_Category',
-    'Outlet_Identifier'),
+    'bm_data.Item_Fat_Content',
+    'bm_data.Outlet_Size',
+    'bm_data.Outlet_Location_Type',
+    'bm_data.Outlet_Type',
+    'bm_data.Item_Category',
+    'bm_data.Outlet_Identifier'),
   sep ='_')
 
-summary(bm_data)
+summary(sel_bm_data_df)
 # 2.5. Create data frame from dummies
 # bm_df = as.data.frame(predict(dummies,newdata=bm_data))
 
-bm_df <- subset(
-  bm_data,
+sel_bm_data_df_dummy <- subset(
+  sel_bm_data_df,
   select = -c(Item_Identifier, Item_Type, Outlet_Establishment_Year))
 str(bm_df)
 summary(bm_df)
