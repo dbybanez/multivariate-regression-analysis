@@ -76,7 +76,7 @@ table(data$Outlet_Size)           # Outlet_Size
 table(data$Outlet_Location_Type)  # Outlet_Location_Type
 table(data$Outlet_Type)           # Outlet_Type
 
-# 2. Exploratory data analysis
+# 2. Exploratory data analysis and data visualization
 
 # 2.1 Univariate Analysis 
 
@@ -229,25 +229,83 @@ plot_mrp_sales <- ggplot(data) +
 sec_row = plot_grid(plot_visibility_sales, plot_mrp_sales, ncol = 2)
 plot_grid(sec_row, plot_weight_sales, nrow = 2)
 
-# Outlet_Identifier, Outlet_Type, and Item_Outlet_Sales
-plot_identifier_type_sales <- ggplot(data) +
-  geom_boxplot(
-    aes(Outlet_Identifier, sqrt(Item_Outlet_Sales), fill = Outlet_Type)) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90))
-plot_identifier_type_sales
+# Bivariate analysis for categorical variables with respect to the dependent/target variable Item_Outlet_Sales.
 
+# Item_Type and Item_Outlet_Sales
+boxplot_item_type_sales <- ggplot(data) +
+  geom_boxplot(
+    aes(Item_Type, Item_Outlet_Sales), fill = "#FB5555") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,), legend.position = "none")
+boxplot_item_type_sales
+
+# Item_Fat_Content and Item_Outlet_Sales
+boxplot_item_fat_content_sales <- ggplot(data) +
+  geom_boxplot(
+    aes(Item_Fat_Content, Item_Outlet_Sales), fill = "#55A3FB") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+boxplot_item_fat_content_sales
+
+# Outlet_Identifier and Item_Outlet_Sales
+boxplot_identifier_sales <- ggplot(data) +
+  geom_boxplot(
+    aes(Outlet_Identifier, sqrt(Item_Outlet_Sales)), fill = "#45B74C") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none")
+boxplot_identifier_sales
+
+sec_row_boxplot = plot_grid(boxplot_item_fat_content_sales, boxplot_identifier_sales, ncol = 2)
+plot_grid(sec_row_boxplot, boxplot_item_type_sales, nrow = 2)
+
+# Outlet_Size and Item_Outlet_Sales
+boxplot_outlet_size_sales <- ggplot(data) +
+  geom_boxplot(
+    aes(Outlet_Size, Item_Outlet_Sales), fill = "#FFB300") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,), legend.position = "none")
+boxplot_outlet_size_sales
+
+# Outlet_Location_Type and Item_Outlet_Sales
+boxplot_outlet_location_type_sales <- ggplot(data) +
+  geom_boxplot(
+    aes(Outlet_Location_Type, Item_Outlet_Sales), fill = "#FF5700") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,), legend.position = "none")
+boxplot_outlet_location_type_sales
+
+# Outlet_Type and Item_Outlet_Sales
+boxplot_outlet_type_sales <- ggplot(data) +
+  geom_boxplot(
+    aes(Outlet_Type, Item_Outlet_Sales), fill = "#00FFBA") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,), legend.position = "none")
+boxplot_outlet_type_sales
+
+plot_grid(boxplot_outlet_size_sales, boxplot_outlet_location_type_sales, boxplot_outlet_type_sales, ncol= 3, nrow = 1)
 
 # 2. Data Cleaning
 
 # Omitting blanks
-# Although in data science, as much as 
-nrow(data) # total rows before omitting
-bm_data <- na.omit(data) # use bm_data moving forward
+# Although in data science, as much as possible, we treat blanks and find alternatives.
+# But for this example, we will omit all rows with blanks or zeroes (Item_Visibility)
+
+bm_data = data # create temporary data
+nrow(bm_data) # total rows before omitting
+
+# Remove blanks for Item_Weight
+omit_item_weight_blanks     = sqldf("SELECT COUNT(*) AS Item_Weight_Blanks FROM bm_data WHERE Item_Weight IS NULL OR Item_Weight = ''") 
+omit_item_weight_blanks     # 1463 blanks for Item_Weight
+bm_data = sqldf(c("DELETE FROM bm_data WHERE Item_Weight IS NULL OR Item_Weight = ''", "select * FROM main.bm_data"))
+
+# Remove blanks for Outlet_Size
+omit_outlet_size_blanks       = sqldf("SELECT COUNT(*) AS Outlet_Size_Blanks FROM bm_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''") 
+omit_outlet_size_blanks       # 2410 blanks for Outlet_Size
+bm_data = sqldf(c("DELETE FROM bm_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''", "select * FROM main.bm_data"))
+
+# Remove zeroes for Item_Visibility
+omit_item_visibility_blanks = sqldf("SELECT COUNT(*) AS Item_Visiblity_Zeroes FROM bm_data WHERE Item_Visibility = 0") 
+omit_item_visibility_blanks # no blanks for Item_Visibility
+bm_data = sqldf(c("DELETE FROM bm_data WHERE Item_Visibility = 0", "select * FROM main.bm_data"))
+
+#bm_data <- na.omit(data) # use bm_data moving forward
 nrow(bm_data) # total rows after omitting
 
-
-# 2. Data Pre-processing
+# 3. Data Pre-processing
 
 # 2.1. Combine Item_Fat_Content categories
 bm_data$Item_Fat_Content <-str_replace(
