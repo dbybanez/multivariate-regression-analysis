@@ -284,83 +284,83 @@ plot_grid(boxplot_outlet_size_sales, boxplot_outlet_location_type_sales, boxplot
 # Although in data science, as much as possible, we treat blanks and find alternatives.
 # But for this example, we will omit all rows with blanks or zeroes (Item_Visibility)
 
-bm_data = data # create temporary data
-nrow(bm_data) # total rows before omitting
+cleaned_data = data # create copy of original data
+nrow(processed_data) # total rows before omitting
 
 # Remove blanks for Item_Weight
-omit_item_weight_blanks     = sqldf("SELECT COUNT(*) AS Item_Weight_Blanks FROM bm_data WHERE Item_Weight IS NULL OR Item_Weight = ''") 
+omit_item_weight_blanks     = sqldf("SELECT COUNT(*) AS Item_Weight_Blanks FROM cleaned_data WHERE Item_Weight IS NULL OR Item_Weight = ''") 
 omit_item_weight_blanks     # 1463 blanks for Item_Weight
-bm_data = sqldf(c("DELETE FROM bm_data WHERE Item_Weight IS NULL OR Item_Weight = ''", "select * FROM main.bm_data"))
+cleaned_data = sqldf(c("DELETE FROM cleaned_data WHERE Item_Weight IS NULL OR Item_Weight = ''", "select * FROM main.cleaned_data"))
 
 # Remove blanks for Outlet_Size
-omit_outlet_size_blanks       = sqldf("SELECT COUNT(*) AS Outlet_Size_Blanks FROM bm_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''") 
+omit_outlet_size_blanks       = sqldf("SELECT COUNT(*) AS Outlet_Size_Blanks FROM cleaned_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''") 
 omit_outlet_size_blanks       # 2410 blanks for Outlet_Size
-bm_data = sqldf(c("DELETE FROM bm_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''", "select * FROM main.bm_data"))
+cleaned_data = sqldf(c("DELETE FROM cleaned_data WHERE Outlet_Size IS NULL OR Outlet_Size = ''", "select * FROM main.cleaned_data"))
 
 # Remove zeros for Item_Visibility
-omit_item_visibility_blanks = sqldf("SELECT COUNT(*) AS Item_Visiblity_Zeros FROM bm_data WHERE Item_Visibility = 0") 
+omit_item_visibility_blanks = sqldf("SELECT COUNT(*) AS Item_Visiblity_Zeros FROM cleaned_data WHERE Item_Visibility = 0") 
 omit_item_visibility_blanks # no blanks for Item_Visibility
-bm_data = sqldf(c("DELETE FROM bm_data WHERE Item_Visibility = 0", "select * FROM main.bm_data"))
+cleaned_data = sqldf(c("DELETE FROM cleaned_data WHERE Item_Visibility = 0", "select * FROM main.cleaned_data"))
 
-#bm_data <- na.omit(data) # use bm_data moving forward
-nrow(bm_data) # total rows after omitting
+#cleaned_data <- na.omit(data) # use cleaned_data moving forward
+nrow(cleaned_data) # total rows after omitting
 
 # 3. Data Pre-processing
 
 # 3.1 Combine Item_Fat_Content categories
-table(bm_data$Item_Fat_Content) # Before
-bm_data$Item_Fat_Content <-str_replace(
-  str_replace(str_replace(bm_data$Item_Fat_Content,"LF","Low Fat"),"reg","Regular"),"low fat","Low Fat")
-table(bm_data$Item_Fat_Content) # After
+table(cleaned_data$Item_Fat_Content) # Before
+cleaned_data$Item_Fat_Content <-str_replace(
+  str_replace(str_replace(cleaned_data$Item_Fat_Content,"LF","Low Fat"),"reg","Regular"),"low fat","Low Fat")
+table(cleaned_data$Item_Fat_Content) # After
 
 # 3.2 Create Outlet_Age and Item_Category columns
-bm_data <- bm_data %>% 
+cleaned_data <- cleaned_data %>% 
   mutate(Item_Category = substr(Item_Identifier, 1, 2),
          Outlet_Age = 2013 - Outlet_Establishment_Year)
-table(bm_data$Item_Category)
+table(cleaned_data$Item_Category)
 
 # 3.3 Convert non-food items to Non-Edible category in Item_Category
-bm_data$Item_Fat_Content[bm_data$Item_Category == "NC"] = "Non-Edible" 
-table(bm_data$Item_Fat_Content)
+cleaned_data$Item_Fat_Content[cleaned_data$Item_Category == "NC"] = "Non-Edible" 
+table(cleaned_data$Item_Fat_Content)
 
 # 3.4 Select the necessary columns before checking the overall significance
-sel_bm_data_df <- data.frame(
-                bm_data$Item_Category,
-                bm_data$Item_Weight,
-                bm_data$Item_Fat_Content,
-                bm_data$Item_Visibility,
-                bm_data$Item_Type,
-                bm_data$Item_MRP,
-                bm_data$Outlet_Identifier,
-                bm_data$Outlet_Establishment_Year,
-                bm_data$Outlet_Size,
-                bm_data$Outlet_Location_Type,
-                bm_data$Item_Outlet_Sales)
+final_data <- data.frame(
+                cleaned_data$Item_Category,
+                cleaned_data$Item_Weight,
+                cleaned_data$Item_Fat_Content,
+                cleaned_data$Item_Visibility,
+                cleaned_data$Item_Type,
+                cleaned_data$Item_MRP,
+                cleaned_data$Outlet_Identifier,
+                cleaned_data$Outlet_Establishment_Year,
+                cleaned_data$Outlet_Size,
+                cleaned_data$Outlet_Location_Type,
+                cleaned_data$Item_Outlet_Sales)
 summary(sel_bm_data_df)
 
 # 3.5 Checking for overall significance before performing dummy
-full_bm_data_df = lm(sel_bm_data_df$bm_data.Item_Outlet_Sales~., data = sel_bm_data_df)
+full_bm_data_df = lm(sel_bm_data_df$cleaned_data.Item_Outlet_Sales~., data = sel_bm_data_df)
 anova(full_bm_data_df)
 summary(full_bm_data_df)
 coefficients(full_bm_data_df)
 
 # 3.6 Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
-# dummies = dummyVars(~.,data=bm_data,fullRank=TRUE)
+# dummies = dummyVars(~.,data=cleaned_data,fullRank=TRUE)
 # dummies
 sel_bm_data_df_dummy <- dummy.data.frame(
   sel_bm_data_df,
   names = c(
-    'bm_data.Item_Fat_Content',
-    'bm_data.Outlet_Size',
-    'bm_data.Outlet_Location_Type',
-    'bm_data.Outlet_Type',
-    'bm_data.Item_Category',
-    'bm_data.Outlet_Identifier'),
+    'cleaned_data.Item_Fat_Content',
+    'cleaned_data.Outlet_Size',
+    'cleaned_data.Outlet_Location_Type',
+    'cleaned_data.Outlet_Type',
+    'cleaned_data.Item_Category',
+    'cleaned_data.Outlet_Identifier'),
   sep ='_')
 
 summary(sel_bm_data_df)
 # 2.5. Create data frame from dummies
-# bm_df = as.data.frame(predict(dummies,newdata=bm_data))
+# bm_df = as.data.frame(predict(dummies,newdata=cleaned_data))
 
 sel_bm_data_df_dummy <- subset(
   sel_bm_data_df,
