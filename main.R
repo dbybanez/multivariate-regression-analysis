@@ -21,6 +21,7 @@ library(dummies) # for dummies
 library(olsrr) # for OLS regression models, for ols_* functions
 library(sqldf) # SQL queries
 library(car) # For leveneTest
+library(lmtest) # for dwtest (durbin-watson test)
 
 # 1. Data Inspection
 
@@ -358,10 +359,18 @@ dummied_data <- dummy.data.frame(
   final_data,
   names = c(
     "Item_Category",
-    "Outlet_Identifier"
+    "Outlet_Identifier",
+    "Item_Fat_Content",
+    "Item_Type",
+    "Item_Fat_Content",
+    "Outlet_Size",
+    "Outlet_Location_Type"
   ),
   sep = "_"
 )
+
+View(dummied_data)
+plot(dummied_data[1:5])
 
 # 3.6 Checking for overall significance of all variables after performing dummies
 lm_data = lm(Item_Outlet_Sales~., data = dummied_data)
@@ -412,8 +421,9 @@ head(dummied_data)
 new_lm_data = lm(Item_Outlet_Sales~
                    Item_Weight +
                    Item_Visibility +
-                   Item_Type +
-                   Item_MRP, 
+                   Item_Type_Seafood +
+                   Item_MRP +
+                   Outlet_Identifier_OUT018,
                  data = dummied_data)
 
 summary(new_lm_data)
@@ -497,6 +507,39 @@ corrplot(cor, method = "pie")
 corrplot(cor, method="number")
 
 # Formal Diagnostics Sample-vif needs to dependent variables
+
+vif(lm(Item_Outlet_Sales~
+         Item_Visibility+
+         Item_Weight+
+         Item_MRP+
+         Item_Type_Seafood+
+         Outlet_Identifier_OUT018,
+       data = dummied_data))
+
+# Independence
+
+# A. Graphical Analysis of Residuals
+
+plot (fitted(new_lm_data), residuals(new_lm_data), xlab="Fitted", ylab="Residuals")
+abline (h=0)
+
+# B. Durbin-Watson Test
+
+dwtest(lm(Item_Outlet_Sales~
+            Item_Visibility+
+            Item_Weight+
+            Item_MRP+
+            Item_Type_Seafood+
+            Outlet_Identifier_OUT018,
+          data = dummied_data))
+
+
+
+
+
+
+
+
 
 # 2.5. Create data frame from dummies
 # bm_df = as.data.frame(predict(dummies,newdata=cleaned_data))
