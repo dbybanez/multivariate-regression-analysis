@@ -14,11 +14,13 @@ library(gridExtra) # display plots in grid format
 library(dplyr) # data manipulation (group_by)
 library(ggplot2)
 library(cowplot) # for plot_grid
+library(corrplot) # For corrplot
 library(stringr) # for str_replace
 library(caret) # parameter tuning. for dummyVars
 library(dummies) # for dummies
 library(olsrr) # for OLS regression models, for ols_* functions
 library(sqldf) # SQL queries
+library(car) # For leveneTest
 
 # 1. Data Inspection
 
@@ -390,21 +392,111 @@ plot(all_possible)
 best_subset <- ols_step_best_subset(lm_data) # Takes more than N hours. Not finished
 plot(best_subset)
 
-# Test the (new) model (using the selected independent variables)
-# 3 numerical variables
-#   - Item_Weight
-#   - Item_Visibility
-#   - Item_MRP
-# 1 categorical variable
-#   - Item_Type
+# 4. Test the (new) model (using the selected independent variables)
 
-# reviewing the significance of the linear model
+#    3 numerical variables
+#      - Item_Weight
+#      - Item_Visibility
+#      - Item_MRP
+#    1 categorical variable
+#      - Item_Type
+
+# Reviewing the significance of the (old) linear model
 anova(lm_data)
 summary(lm_data)
 coefficients(lm_data)
 
 head(dummied_data)
-new_lm_data = lm(Item_Outlet_Sales~Item_Weight+Item_Visibility+Item_Type+Item_MRP, data = dummied_data)
+
+# Creating the new model
+new_lm_data = lm(Item_Outlet_Sales~
+                   Item_Weight +
+                   Item_Visibility +
+                   Item_Type +
+                   Item_MRP, 
+                 data = dummied_data)
+
+summary(new_lm_data)
+
+# 4.1 Normally Test
+
+qqnorm(residuals(new_lm_data), ylab="Residuals")
+qqline(residuals(new_lm_data))
+
+# 4.2 Shapiro-Wilk Normality Test
+
+shapiro.test(residuals(new_lm_data))
+
+# 4.3 Kolmogorov-Smirnov Normality Test
+
+ks.test(residuals(new_lm_data),rnorm(mean=0,sd=1,20),alternative="two.sided")
+
+# Homoscedasticity
+# Checking the noise or random disturbance in the relationship between the independent variables
+# and the dependent variables
+
+# A. Graphical Analysis of Residuals
+
+plot(fitted(new_lm_data),residuals(new_lm_data))
+
+# B. Bartlett's Test Example
+
+bartletts_data = c(fitted(new_lm_data),residuals(new_lm_data))
+bartletts_data
+
+rating = c(rep("predicted", 4358),rep("residuals", 4358)) # arguments imply differing number of rows: 8716. 8716/2 to solve the error
+bartletts_data_rating = data.frame(bartletts_data, rating)
+bartletts_data_rating
+
+bartlett.test(bartletts_data~rating, data = bartletts_data_rating)
+
+# Levene's test
+
+# Can use another data, not necessarily related to Bartlett's
+leveneTest(bartletts_data~rating, data=bartletts_data_rating, center=mean)
+
+# Multicollinearity
+
+#    - In statistics, multicollinearity is a phenomenon in which one predictor variable
+#      in a multiple regression model can be linearly predicted from the others with a substantial
+#      degree of accuracy.
+
+# Check the variables' in the multiple regression model (new_lm_data) if they're highly linearly related
+
+# Correlation
+# Create new data frame with numeric variables only
+dummied_data_num = data.frame(dummied_data$Item_Category_DR,
+                              dummied_data$Item_Category_FD,
+                              dummied_data$Item_Category_NC,
+                              dummied_data$Item_Weight,
+                              dummied_data$Item_Visibility,
+                              dummied_data$Item_MRP,
+                              dummied_data$Outlet_Identifier_OUT013,
+                              dummied_data$Outlet_Identifier_OUT018,
+                              dummied_data$Outlet_Identifier_OUT035,
+                              dummied_data$Outlet_Identifier_OUT046,
+                              dummied_data$Outlet_Identifier_OUT049,
+                              dummied_data$Item_Outlet_Sales)
+
+colnames(dummied_data_num) <- c("Item_Category_DR",
+                          "Item_Category_FD",
+                          "Item_Category_NC",
+                          "Item_Weight",
+                          "Item_Visibility",
+                          "Item_MRP",
+                          "Outlet_Identifier_OUT013",
+                          "Outlet_Identifier_OUT018",
+                          "Outlet_Identifier_OUT035",
+                          "Outlet_Identifier_OUT046",
+                          "Outlet_Identifier_OUT049",
+                          "Item_Outlet_Sales"
+                          ) # Renaming column names. This would remove "cleaned_data.*"
+
+cor = cor(dummied_data_num)
+corrplot(cor, method = "pie")
+corrplot(cor, method="number")
+
+# Formal Diagnostics Sample-vif needs to dependent variables
 
 # 2.5. Create data frame from dummies
 # bm_df = as.data.frame(predict(dummies,newdata=cleaned_data))
