@@ -285,7 +285,7 @@ plot_grid(boxplot_outlet_size_sales, boxplot_outlet_location_type_sales, boxplot
 # But for this example, we will omit all rows with blanks or zeroes (Item_Visibility)
 
 cleaned_data = data # create copy of original data
-nrow(processed_data) # total rows before omitting
+nrow(cleaned_data) # total rows before omitting
 
 # Remove blanks for Item_Weight
 omit_item_weight_blanks     = sqldf("SELECT COUNT(*) AS Item_Weight_Blanks FROM cleaned_data WHERE Item_Weight IS NULL OR Item_Weight = ''") 
@@ -336,29 +336,76 @@ final_data <- data.frame(
                 cleaned_data$Outlet_Size,
                 cleaned_data$Outlet_Location_Type,
                 cleaned_data$Item_Outlet_Sales)
-summary(sel_bm_data_df)
 
-# 3.5 Checking for overall significance before performing dummy
-full_bm_data_df = lm(sel_bm_data_df$cleaned_data.Item_Outlet_Sales~., data = sel_bm_data_df)
-anova(full_bm_data_df)
-summary(full_bm_data_df)
-coefficients(full_bm_data_df)
+colnames(final_data) <- c("Item_Category",
+                          "Item_Weight",
+                          "Item_Fat_Content",
+                          "Item_Visibility",
+                          "Item_Type",
+                          "Item_MRP",
+                          "Outlet_Identifier",
+                          "Outlet_Establishment_Year",
+                          "Outlet_Size",
+                          "Outlet_Location_Type",
+                          "Item_Outlet_Sales") # Renaming column names. This would remove "cleaned_data.*"
+summary(final_data)
 
-# 3.6 Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
+# 3.5 Convert categorical data to numerical. One Hot Encoding (dummies/dummyVars)
 # dummies = dummyVars(~.,data=cleaned_data,fullRank=TRUE)
-# dummies
-sel_bm_data_df_dummy <- dummy.data.frame(
-  sel_bm_data_df,
+dummied_data <- dummy.data.frame(
+  final_data,
   names = c(
-    'cleaned_data.Item_Fat_Content',
-    'cleaned_data.Outlet_Size',
-    'cleaned_data.Outlet_Location_Type',
-    'cleaned_data.Outlet_Type',
-    'cleaned_data.Item_Category',
-    'cleaned_data.Outlet_Identifier'),
-  sep ='_')
+    "Item_Category",
+    "Outlet_Identifier"
+  ),
+  sep = "_"
+)
 
-summary(sel_bm_data_df)
+# 3.6 Checking for overall significance of all variables after performing dummies
+lm_data = lm(Item_Outlet_Sales~., data = dummied_data)
+anova(lm_data)
+summary(lm_data)
+coefficients(lm_data)
+
+# X.X Variable Selection (Optional)
+# Automatic Procedures
+
+# Forward
+forward <- ols_step_forward_p(lm_data, data = final_data, details = TRUE)
+plot(forward)
+
+# Backward
+backward <- ols_step_backward_p(lm_data, details = TRUE)
+plot(backward)
+
+# Stepwise
+stepwise <- ols_step_both_p(lm_data,details=TRUE,pent=0.05,prem=0.05)
+plot(stepwise)
+
+# All possible
+all_possible <- ols_step_all_possible(lm_data) # Takes more than 6 hours. Not finished
+plot(all_possible)
+
+# Best Subset
+best_subset <- ols_step_best_subset(lm_data) # Takes more than N hours. Not finished
+plot(best_subset)
+
+# Test the (new) model (using the selected independent variables)
+# 3 numerical variables
+#   - Item_Weight
+#   - Item_Visibility
+#   - Item_MRP
+# 1 categorical variable
+#   - Item_Type
+
+# reviewing the significance of the linear model
+anova(lm_data)
+summary(lm_data)
+coefficients(lm_data)
+
+head(dummied_data)
+new_lm_data = lm(Item_Outlet_Sales~Item_Weight+Item_Visibility+Item_Type+Item_MRP, data = dummied_data)
+
 # 2.5. Create data frame from dummies
 # bm_df = as.data.frame(predict(dummies,newdata=cleaned_data))
 
@@ -388,18 +435,6 @@ plot(olssforwardp_bm_lm)
 olssbackp_bm_lm <- ols_step_backward_p(bm_lm,details=TRUE)
 plot(olssbackp_bm_lm)
 
-# Stepwise
-#olssbothp_bm_lm <- ols_step_both_p(bm_lm, details=TRUE, pent=0.05, prem=0.05) # error
-#plot(olssbothp_bm_lm)
-
-# All possible
-#if(.Platform$OS.type == "windows") withAutoprint({
-#  memory.size()
-#  memory.size(TRUE)
-#  memory.limit()
-#})
-#memory.limit(size=56000)
-#olssap_bm_lm <- ols_step_all_possible(bm_lm)
 
 #Best Subset (variables)
 olssbs_bm_lm <- ols_step_best_subset(bm_lm)
